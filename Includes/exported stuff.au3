@@ -90,8 +90,6 @@ Func LoadHitObjects($Lines)
 		Return 0
 	EndIf
 
-	ConsoleWrite("Erste Zeile der Beatmap: " & $Lines[0] & @CRLF)
-
 	Local $FoundStart = 0
 
 	do
@@ -110,6 +108,54 @@ Func LoadHitObjects($Lines)
 		return $Lines
 	EndIf
 
+EndFunc   ;==>LoadBeatmap
+
+
+; #FUNCTION# ====================================================================================================================
+; Name ..........: LoadBpms
+; Description ...: Loads all bpms
+; Syntax ........: LoadBpms($Lines)
+; Parameters ....: $Lines               - a string list containing all the lines of a beatmap
+; Return values .: $Object[index][0 = time, 1 = bpmlength]
+; Author ........: Icclear
+; Modified ......:
+; Remarks .......:
+; Related .......:
+; Link ..........:
+; Example .......: No
+; ===============================================================================================================================
+Func LoadBpms($Lines)
+
+	If not IsArray($Lines) Then
+		SetError(2)
+		Return 0
+	EndIf
+
+	Local $FoundStart = 0
+
+	do	;Find beginning
+		if $Lines[0] = "[TimingPoints]" Then
+			_ArrayDelete($Lines, 0)
+			$FoundStart = 1
+		Else
+			_ArrayDelete($Lines, 0)
+		EndIf
+	Until $FoundStart = 1 Or 0 = UBound($Lines)
+
+	If $FoundStart = 0 or UBound($Lines) = 0 Then
+		SetError(1)
+		Return 0
+	EndIf
+
+	Local $Bpms[0][2]	;Need time and bpm
+	for $i = 0 to UBound($Lines) - 1 step 1
+		if $Lines[$i] = "" then return $Bpms
+		Local $TempHolder = StringSplit($Lines[$i], ",")
+		_ArrayAdd($Bpms, $TempHolder[1])
+		$Bpms[$i][1] = $TempHolder[2]
+	Next
+	SetError(3)
+	return 0
 EndFunc   ;==>LoadBeatmap
 
 

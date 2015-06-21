@@ -165,6 +165,7 @@ Global $Playing = 0
 Global $BeatmapLoaded = 0
 
 Global $HitList
+Global $Bpms
 Global $SliderMultiplier
 
 Global $Diffs
@@ -238,6 +239,11 @@ _Exit($LogFile, $OsuProcess)
 Func Play()
 	#Region PlayingInit
 
+	If $BeatmapLoaded = 0 Then ;notBeatmap exit
+		setStatus($Status, "No Beatmap loaded.")
+		Return
+	EndIf
+
 	$Playing = 1
 	Local $Finished = 0
 	Local Const $RelaxActive = _isChecked($RelaxBox)
@@ -248,6 +254,8 @@ Func Play()
 	Global $NextHitType = 0
 	Global $Duration = 0
 	Global $Time = 0
+	Local $BPMCount = 0
+	Local $CurrentBPM = $Bpms[$BPMCount][1] ;bpm
 	Local $i = 0 ;Count var
 
 	Global $LastButtonPressed = 1
@@ -273,7 +281,7 @@ Func Play()
 
 
 	;Some songs start with negative time that is calculated as extremely high value in autoit. Thus wait till the time is below 10 and the map starts.
-	While readTime($LogFile, $TimeAdress, $OsuProcess) > 30 Or readTime($LogFile, $TimeAdress, $OsuProcess) < 0
+	While readTime($LogFile, $TimeAdress, $OsuProcess) > 10 Or readTime($LogFile, $TimeAdress, $OsuProcess) < 0
 		Sleep(1)
 	WEnd
 
@@ -281,6 +289,19 @@ Func Play()
 
 		$Time = readTime($LogFile, $TimeAdress, $OsuProcess) ;Zeit auslesen
 		setTime($TimeLabel, $Time)
+
+
+		If $BPMCount < UBound($Bpms) - 1 Then ;Change to next bpm
+			If $Time > $Bpms[$BPMCount + 1][0] Then
+				$BPMCount += 1
+				If $Bpms[$BPMCount][1] < 0 Then
+					$CurrentBPM = -1 * $Bpms[$BPMCount][1] / 100 * $CurrentBPM
+				Else
+					$CurrentBPM = $Bpms[$BPMCount][1]
+				EndIf
+			EndIf
+		EndIf
+
 
 		If $FoundNextHit = 0 Then
 
@@ -312,32 +333,20 @@ Func Play()
 				If $NextHitType = 1 Or $NextHitType = 5 Or $NextHitType = 16 Then ;Circle
 					$EndKlick = $BeginKlick + $ExtraPressTime
 
-;~ 			ElseIf $NextHitType = 2 Or $NextHitType = 6 Or $NextHitType = 21 Or $NextHitType = 22 Then ;Slider
-;~ 				;Endtime = StartTime + RepeatCount * SliderLength / AbsoluteSliderVelocity
-;~ 				;Duration = pixelLength * SliderMultiplier * repeat value
-;~ 				Local $Repetition = StringSplit($HitList[$i - 1], ",")[7]
-;~ 				Local $Length = StringSplit($HitList[$i - 1], ",")[8]
-;~ 				$EndKlick = $BeginKlick + $Repetition * $Length * $SliderMultiplier + $ExtraPressTime
-
-;~ 				If $i < UBound($HitList) Then	;CHeat TODO: 	DO IT RIGHT-------------------
-;~ 					$EndKlick = StringSplit($HitList[$i], ",")[3] ;+ $ExtraPressTime
-;~ 				Else
-;~ 					$EndKlick = $BeginKlick + 10000
-;~ 				EndIf
+;~ 				ElseIf $NextHitType = 2 Or $NextHitType = 6 Or $NextHitType = 21 Or $NextHitType = 22 Then ;Slider
+					;Moved to else since there were too many possibilities
 
 
 				ElseIf $NextHitType = 12 Or $NextHitType = 8 Then ;Spin
 					$EndKlick = StringSplit($HitList[$i - 1], ",")[6] + $ExtraPressTime ;You can read the duration there
 
-					;if pressed till after the next hitobject
-					If $i <= UBound($HitList) - 1 And $EndKlick > StringSplit($HitList[$i], ",")[3] Then $EndKlick = StringSplit($HitList[$i], ",")[3] - $ExtraPressTime
+					;if pressed till before the next hitobject
+					If $i <= UBound($HitList) - 1 And $EndKlick > StringSplit($HitList[$i], ",")[3] Then $EndKlick = StringSplit($HitList[$i], ",")[3] - ($ExtraPressTime * 2)
 
 				Else ;Slider
-					If $i <= UBound($HitList) - 1 Then ;CHeat TODO: 	DO IT RIGHT-------------------
-						$EndKlick = StringSplit($HitList[$i], ",")[3] - $ExtraPressTime
-					Else
-						$EndKlick = $BeginKlick + 10000
-					EndIf
+					Local $Repetition = StringSplit($HitList[$i - 1], ",")[7]
+					Local $Length = StringSplit($HitList[$i - 1], ",")[8]
+					$EndKlick = $BeginKlick + $CurrentBPM * $Repetition * $Length / $SliderMultiplier / 100
 				EndIf
 
 
@@ -662,9 +671,17 @@ Func LoadBeatmap($FilePath)
 		Return
 	EndIf
 
+	ConsoleWrite("Erste Zeile der Beatmap: " & $Beatmap[0] & @CRLF)
+
 	$HitList = LoadHitObjects($Beatmap)
-	If @error Then
-		DisplayError("Error loading Beatmap. Errorcode: " & @error)
+	If @error Or Not IsArray($HitList) Then
+		DisplayError("Error loading hitobjects Errorcode: " & @error)
+		Return
+	EndIf
+
+	$Bpms = LoadBpms($Beatmap)
+	If @error Or Not IsArray($Bpms) Then
+		DisplayError("Error loading TimingPoints. Errorcode: " & @error)
 		Return
 	EndIf
 
