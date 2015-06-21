@@ -89,7 +89,13 @@ EndIf
 logThis($LogFile, "Process opened.")
 setStatus($Status, "Process opened.")
 
-Local Const $aob = "DB 5D F4 8B 45 F4 A3" ;Pattern + Scan
+; B4 17 00 00 14 13 00 00 B8 17 00 00 14 13 00 00
+Local Const $aob = "B4 17 00 00 14 13 00 00 B8 17 00 00 14 13 00 00" ;Pattern + Scan form an online guy
+; address = (IntPtr)((Int32)addre + (Int32)((IntPtr)0xA20));
+
+
+;~ Local Const $aob = "DB 5D F4 8B 45 F4 A3" ;Pattern + Scan
+
 Local Const $scan = _AOBScan($OsuProcess, $aob)
 
 If @error Or $scan = 0 Then ;Pattern gefunden?
@@ -102,13 +108,14 @@ logThis($LogFile, "Pattern {" & $aob & "} found.")
 setStatus($Status, "Pattern found.")
 
 ;$scan += 0x7 ;Anpassen der Adresse
-Global Const $TimeAdress = _MemoryRead($scan + 0x7, $OsuProcess, "byte[4]")
+;~ Global Const $TimeAdress = _MemoryRead($scan + 0x7, $OsuProcess, "byte[4]")
+Global Const $TimeAdress = $scan + 0xA20
 
-If @error Or $TimeAdress = 0 Then ;Zeit gefunden?
-	DisplayError("Time-adress not found! Errorcode: " & @error)
-	SetError(4)
-	_Exit($LogFile, $OsuProcess)
-EndIf
+;~ If @error Or $TimeAdress = 0 Then ;Zeit gefunden?
+;~ 	DisplayError("Time-adress not found! Errorcode: " & @error)
+;~ 	SetError(4)
+;~ 	_Exit($LogFile, $OsuProcess)
+;~ EndIf
 
 logThis($LogFile, "Timeadress found.")
 setStatus($Status, "Timeadress found.")
@@ -176,7 +183,7 @@ Local $Playing = 0
 Local $Time = 0
 setTime($TimeLabel, $Time) ;Zeit eintragen
 
-While 1
+While 1 ;Main window loop
 	$OsuTitle = WinGetTitle("osu!")
 	If $OsuTitle = "" Then
 		DisplayError("Osu Window not found. Bot will now exit.")
@@ -232,6 +239,7 @@ Func Play()
 	#Region PlayingInit
 
 	$Playing = 1
+	Local $Finished = 0
 	Local Const $RelaxActive = _isChecked($RelaxBox)
 
 	Local $FoundNextHit = 0
@@ -278,6 +286,11 @@ Func Play()
 
 			Do ;Find the next hit
 				If $i >= UBound($HitList) Then ;Endoffile
+					If $BT1Pressed = 1 Or $BT2Pressed = 1 Then
+						$Finished = 1
+						ExitLoop
+					EndIf
+
 					setStatus($Status, "Finished playing map.")
 					logThis($LogFile, "Stopped Playing")
 					ResetButtons()
@@ -289,14 +302,15 @@ Func Play()
 				$i += 1
 			Until $FoundNextHit = 1
 
-			$NextHitType = StringSplit($HitList[$i - 1], ",")[4] ;Type
+			If $Finished = 0 Then
+				$NextHitType = StringSplit($HitList[$i - 1], ",")[4] ;Type
 
-			$BeginKlick = $NextHitTime - $PreKlick
+				$BeginKlick = $NextHitTime - $PreKlick
 
 
-			;Which type of hit
-			If $NextHitType = 1 Or $NextHitType = 5 Or $NextHitType = 16 Then ;Circle
-				$EndKlick = $BeginKlick + $ExtraPressTime
+				;Which type of hit
+				If $NextHitType = 1 Or $NextHitType = 5 Or $NextHitType = 16 Then ;Circle
+					$EndKlick = $BeginKlick + $ExtraPressTime
 
 ;~ 			ElseIf $NextHitType = 2 Or $NextHitType = 6 Or $NextHitType = 21 Or $NextHitType = 22 Then ;Slider
 ;~ 				;Endtime = StartTime + RepeatCount * SliderLength / AbsoluteSliderVelocity
@@ -312,34 +326,37 @@ Func Play()
 ;~ 				EndIf
 
 
-			ElseIf $NextHitType = 12 Or $NextHitType = 8 Then ;Spin
-				$EndKlick = StringSplit($HitList[$i - 1], ",")[6] + $ExtraPressTime ;You can read the duration there
+				ElseIf $NextHitType = 12 Or $NextHitType = 8 Then ;Spin
+					$EndKlick = StringSplit($HitList[$i - 1], ",")[6] + $ExtraPressTime ;You can read the duration there
 
-				;if pressed till after the next hitobject
-				If $i <= UBound($HitList) - 1 And $EndKlick > StringSplit($HitList[$i], ",")[3] Then $EndKlick = StringSplit($HitList[$i], ",")[3] - $ExtraPressTime
+					;if pressed till after the next hitobject
+					If $i <= UBound($HitList) - 1 And $EndKlick > StringSplit($HitList[$i], ",")[3] Then $EndKlick = StringSplit($HitList[$i], ",")[3] - $ExtraPressTime
 
-			Else ;Slider
-				If $i <= UBound($HitList) - 1 Then ;CHeat TODO: 	DO IT RIGHT-------------------
-					$EndKlick = StringSplit($HitList[$i], ",")[3] - $ExtraPressTime
-				Else
-					$EndKlick = $BeginKlick + 10000
+				Else ;Slider
+					If $i <= UBound($HitList) - 1 Then ;CHeat TODO: 	DO IT RIGHT-------------------
+						$EndKlick = StringSplit($HitList[$i], ",")[3] - $ExtraPressTime
+					Else
+						$EndKlick = $BeginKlick + 10000
+					EndIf
 				EndIf
+
+
+
+				setStatus($Status, "Next Klick: " & $NextHitTime)
 			EndIf
-
-
-
-			setStatus($Status, "Next Klick: " & $NextHitTime)
 
 		EndIf
 
-		If $RelaxActive And $Time > $BeginKlick And $Time < $EndKlick And $Klicked = 0 Then
-			setStatus($Status, "Klicking")
-			$Klicked = 1
-			Klick()
+		If $Finished = 0 Then
+			If $RelaxActive And $Time > $BeginKlick And $Time < $EndKlick And $Klicked = 0 Then
+				setStatus($Status, "Klicking")
+				$Klicked = 1
+				Klick()
 
-		ElseIf $RelaxActive And $Time >= $BeginKlick + $ExtraPressTime Then
-			$FoundNextHit = 0
-			$Klicked = 0
+			ElseIf $RelaxActive And $Time >= $BeginKlick + $ExtraPressTime Then
+				$FoundNextHit = 0
+				$Klicked = 0
+			EndIf
 		EndIf
 
 		If $RelaxActive Then ReleaseButtons()
@@ -566,11 +583,11 @@ Func LoadSelectedBeatmap()
 	setStatus($Status, "Loading difficulties...")
 	logThis($LogFile, "Loading difficulties...")
 
+	GUICtrlSetData($DiffList, "")
+
 	Local $tmpSong = GUICtrlRead($Songnames)
 	If $tmpSong <> "" And $tmpSong <> 0 Then
 		$Song = $tmpSong
-
-		GUICtrlSetData($DiffList, "")
 
 		$Diffs = _FileListToArray($Directory & $Song, "*", $FLTA_FILES)
 		For $i = 0 To UBound($Diffs) - 1 Step 1
