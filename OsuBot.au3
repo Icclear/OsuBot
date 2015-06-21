@@ -249,7 +249,7 @@ Func Play()
 	Global $BT2ReleaseAt = 0
 
 	Local $PreKlick = 25
-	Global $ExtraPressTime = 50
+	Global $ExtraPressTime = 40
 	Global $BeginKlick = 0
 	Global $EndKlick = 0
 
@@ -295,7 +295,7 @@ Func Play()
 
 
 			;Which type of hit
-			If $NextHitType = 1 Or $NextHitType = 5 Then ;Circle
+			If $NextHitType = 1 Or $NextHitType = 5 Or $NextHitType = 16 Then ;Circle
 				$EndKlick = $BeginKlick + $ExtraPressTime
 
 ;~ 			ElseIf $NextHitType = 2 Or $NextHitType = 6 Or $NextHitType = 21 Or $NextHitType = 22 Then ;Slider
@@ -311,8 +311,7 @@ Func Play()
 ;~ 					$EndKlick = $BeginKlick + 10000
 ;~ 				EndIf
 
-			ElseIf $NextHitType = 16 Then ;New Combo, no click needed
-				$Klicked = 1
+
 			ElseIf $NextHitType = 12 Or $NextHitType = 8 Then ;Spin
 				$EndKlick = StringSplit($HitList[$i - 1], ",")[6] + $ExtraPressTime ;You can read the duration there
 			Else ;Slider
