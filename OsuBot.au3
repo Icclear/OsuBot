@@ -314,9 +314,13 @@ Func Play()
 
 			ElseIf $NextHitType = 12 Or $NextHitType = 8 Then ;Spin
 				$EndKlick = StringSplit($HitList[$i - 1], ",")[6] + $ExtraPressTime ;You can read the duration there
+
+				;if pressed till after the next hitobject
+				If $i <= UBound($HitList) - 1 And $EndKlick > StringSplit($HitList[$i], ",")[3] Then $EndKlick = StringSplit($HitList[$i], ",")[3] - $ExtraPressTime
+
 			Else ;Slider
 				If $i <= UBound($HitList) - 1 Then ;CHeat TODO: 	DO IT RIGHT-------------------
-					$EndKlick = StringSplit($HitList[$i], ",")[3] ;+ $ExtraPressTime
+					$EndKlick = StringSplit($HitList[$i], ",")[3] - $ExtraPressTime
 				Else
 					$EndKlick = $BeginKlick + 10000
 				EndIf
@@ -388,6 +392,7 @@ EndFunc   ;==>Klick
 ; Example .......: No
 ; ===============================================================================================================================
 Func BT1Klick()
+
 	If $BT1Pressed = 0 Then
 		Send("{" & $Button1 & " down}")
 		$BT1Pressed = 1
@@ -422,6 +427,7 @@ EndFunc   ;==>BT1Klick
 ; Example .......: No
 ; ===============================================================================================================================
 Func BT2Klick()
+
 	If $BT2Pressed = 0 Then
 		Send("{" & $Button2 & " down}")
 		$BT2Pressed = 1
