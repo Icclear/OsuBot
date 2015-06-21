@@ -58,6 +58,7 @@ Func _AOBScan($handle, $sig)
 	Local $end_Addr = 0x7FFFFFFF
 
 	For $addr = $start_addr To $end_Addr Step $bytes * ($Mult - 1)
+;~ 	For $addr = $start_addr To $end_Addr Step "0x" & $bytes * ($Mult - 1);Some people need that for some reason.
 		Local $string = _MemoryRead($addr, $handle, "byte[" & $bytes * $Mult & "]")
 
 		StringRegExp($string, $sig, 1, 2)

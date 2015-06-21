@@ -1,5 +1,6 @@
 #Region ;**** Directives created by AutoIt3Wrapper_GUI ****
 #AutoIt3Wrapper_Compression=0
+#AutoIt3Wrapper_Compile_Both=y
 #AutoIt3Wrapper_Run_Tidy=y
 #AutoIt3Wrapper_Run_Au3Stripper=y
 #EndRegion ;**** Directives created by AutoIt3Wrapper_GUI ****
@@ -16,23 +17,48 @@
 #include "Includes\NomadMemory.au3"
 #include "Includes\exported stuff.au3"
 #include "Includes\HelpFunctions.au3"
+#include "Includes\GlobalConsts.au3"
 
 #EndRegion Includes
 
 #Region Init
 
 
-;Data folder
-Global Const $DataFolder = "Data"
-DirCreate("Data")
 
-;Inidatei
-Global Const $Inifile = $DataFolder & "/Settings.ini"
-Global Const $LogFile = $DataFolder & "/log.log"
 
 logThis($LogFile, "Program started.")
 
-;~	Überprüfe, ob ein Osufenster vorhanden ist
+;~ Fenstertitel festlegen
+Local Const $WindowTitle = IniRead($Inifile, $IniSectionGeneral, $IniKeyWindowtitle, "ChangeMe")
+If IniWrite($Inifile, $IniSectionGeneral, $IniKeyWindowtitle, $WindowTitle) = 0 Then
+	showError($LogFile, 0, "Couldn't save windowtitle. File is readonly.")
+EndIf
+
+
+;~ Gui initialisieren
+#Region ### START Koda GUI section ### Form=
+Global $MainWindow = GUICreate($WindowTitle, 741, 338, 1505, 181)
+Global $StatusBox = GUICtrlCreateGroup("StatusBox", 96, 200, 617, 161)
+Global $Status = GUICtrlCreateLabel("Window found.", 112, 224, 586, 17)
+Global $TimeLabel = GUICtrlCreateLabel("Time: ", 112, 288, 589, 17)
+Global $LoadedBeatmap = GUICtrlCreateLabel("Beatmap: ", 112, 256, 594, 17)
+GUICtrlCreateGroup("", -99, -99, 1, 1)
+Global $RelaxBox = GUICtrlCreateCheckbox("RelaxBox", 8, 208, 9, 25)
+GUICtrlSetState(-1, $GUI_CHECKED)
+Local $SongSearch = GUICtrlCreateInput("", 96, 32, 337, 21)
+Local Const $RelaxEnabled = GUICtrlCreateLabel("Relax", 24, 216, 31, 17)
+Global $Songlist = GUICtrlCreateList("", 96, 64, 337, 110)
+;~ Local $LoadList = GUICtrlCreateButton("LoadList", 456, 48, 105, 65)
+;~ Local $LoadSelected = GUICtrlCreateButton("LoadSelected", 456, 128, 105, 65)
+Global $DiffList = GUICtrlCreateList("", 448, 32, 281, 97)
+Local $LoadDiff = GUICtrlCreateButton("LoadDiff", 448, 136, 281, 41)
+GUISetState(@SW_SHOW)
+#EndRegion ### END Koda GUI section ###
+
+logThis($LogFile, "GUI initialized.")
+setStatus($Status, "GUI initialiued.")
+
+;~	is there an osu window?
 If WinWait("osu!", "", 5) = 0 Then
 	showError($LogFile, 0, "Osu!-window not found!")
 	SetError(1)
@@ -41,41 +67,7 @@ EndIf
 Global $OsuTitle = WinGetTitle("osu!")
 
 logThis($LogFile, "Window found")
-
-
-;~ Fenstertitel festlegen
-Local Const $WindowTitle = IniRead($Inifile, "General", "WindowTitle", "ChangeMe")
-If IniWrite($Inifile, "General", "WindowTitle", $WindowTitle) = 0 Then
-	showError($LogFile, 0, "Couldn't save windowtitle. File is readonly.")
-EndIf
-
-
-
-;~ Gui initialisieren
-#Region ### START Koda GUI section ### Form=
-Global $MainWindow = GUICreate($WindowTitle, 741, 534, 197, 152)
-Global $StatusBox = GUICtrlCreateGroup("StatusBox", 408, 312, 305, 193)
-Global $Status = GUICtrlCreateLabel("Window found.", 424, 336, 258, 17)
-Global $TimeLabel = GUICtrlCreateLabel("Time: ", 424, 368, 269, 17)
-Global $TitleLabel = GUICtrlCreateLabel("Title: " & $OsuTitle, 424, 408, 274, 17)
-Global $DirectoryLabel = GUICtrlCreateLabel("Directory: ", 92, 287, 500, 20)
-Global $PlayingLabel = GUICtrlCreateLabel("Playing: ", 424, 440, 272, 17)
-Global $KlickingLabel = GUICtrlCreateLabel("Key: ", 424, 472, 273, 17)
-GUICtrlCreateGroup("", -99, -99, 1, 1)
-Global $RelaxBox = GUICtrlCreateCheckbox("", 56, 344, 9, 25)
-GUICtrlSetState(-1, $GUI_CHECKED)
-Local $Songpath = GUICtrlCreateInput("Songpath", 104, 64, 337, 21) ;TODO: Rename -------
-Global Const $RelaxActivated = GUICtrlCreateLabel("RelaxActivated", 80, 352, 76, 17)
-Global $Songnames = GUICtrlCreateList("", 104, 104, 337, 162)
-Local $LoadList = GUICtrlCreateButton("LoadList", 456, 48, 105, 65)
-Local $LoadSelected = GUICtrlCreateButton("LoadSelected", 456, 128, 105, 65)
-Global $DiffList = GUICtrlCreateList("", 464, 208, 265, 58)
-Local $LoadDiff = GUICtrlCreateButton("LoadDiff", 616, 152, 73, 41)
-GUISetState(@SW_SHOW)
-#EndRegion ### END Koda GUI section ###
-
-logThis($LogFile, "GUI initialized.")
-setStatus($Status, "GUI initialiued.")
+setStatus($Status, "Window found")
 
 ;Osu prozess öffnen
 Local Const $OsuID = ProcessExists("osu!.exe")
@@ -89,9 +81,7 @@ EndIf
 logThis($LogFile, "Process opened.")
 setStatus($Status, "Process opened.")
 
-; B4 17 00 00 14 13 00 00 B8 17 00 00 14 13 00 00
 Local Const $aob = "B4 17 00 00 14 13 00 00 B8 17 00 00 14 13 00 00" ;Pattern + Scan form an online guy
-; address = (IntPtr)((Int32)addre + (Int32)((IntPtr)0xA20));
 
 
 ;~ Local Const $aob = "DB 5D F4 8B 45 F4 A3" ;Pattern + Scan
@@ -107,8 +97,7 @@ EndIf
 logThis($LogFile, "Pattern {" & $aob & "} found.")
 setStatus($Status, "Pattern found.")
 
-;$scan += 0x7 ;Anpassen der Adresse
-;~ Global Const $TimeAdress = _MemoryRead($scan + 0x7, $OsuProcess, "byte[4]")
+;~ Global Const $TimeAdress = _MemoryRead($scan + 0x7, $OsuProcess, "byte[4]")	;Activate if the other one doesn't work anymore
 Global Const $TimeAdress = $scan + 0xA20
 
 ;~ If @error Or $TimeAdress = 0 Then ;Zeit gefunden?
@@ -121,37 +110,32 @@ logThis($LogFile, "Timeadress found.")
 setStatus($Status, "Timeadress found.")
 
 ;OsuVerzeichnis herausfinden
-Global $Directory = IniRead($Inifile, "General", "Directory", StringTrimRight(_ProcessGetLocation($OsuID), 8))
+Global $Directory = IniRead($Inifile, $IniSectionGeneral, $IniKeyDirectory, StringTrimRight(_ProcessGetLocation($OsuID), 8))
 If @error Or $Directory = "" Then
 	DisplayError("Unable to find game directory. Please make sure you have set the right path in your settings. Errorcode: " & @error)
 	SetError(5)
 	_Exit($LogFile, $OsuProcess)
 EndIf
 
-;Verzeichnis ungültig
+;Directory invalid
 If StringLen($Directory) <= 2 Then
-	GUICtrlSetData($DirectoryLabel, "Directory: Error")
 	DisplayError("Directory not Found! ")
 	SetError(6)
 	_Exit($LogFile, $OsuProcess)
-Else ;Wenn gültig, evtl "Songs\" ergänzen und speichern
+Else ;if valid add "Songs\"
 	Local Const $SongsDir = "Songs\"
 	If StringRight($Directory, StringLen($SongsDir)) <> $SongsDir Then
 		$Directory &= $SongsDir
 	EndIf
 
-	If IniWrite($Inifile, "General", "Directory", $Directory) = 0 Then
+	If IniWrite($Inifile, $IniSectionGeneral, $IniKeyDirectory, $Directory) = 0 Then
 		DisplayError("Couldn't save directory File is readonly.")
 	EndIf
-
-	GUICtrlSetData($DirectoryLabel, "Directory: " & $Directory)
 EndIf
 
 logThis($LogFile, "Song folder found: " & $Directory)
 setStatus($Status, "Song folder found.")
 
-Local $Map = "" ;TODO: Make a proper song selection--------------------------------
-GUICtrlSetData($Songpath, $Map)
 ConsoleWriteError("[Warning] Map directory modified!" & @CRLF)
 
 Global Const $MapList = FolderList($Directory)
@@ -191,12 +175,10 @@ While 1 ;Main window loop
 		_Exit($LogFile, $OsuProcess)
 	EndIf
 
-	setTitle($TitleLabel, $OsuTitle) ;Titel auslesen
-
 	If $OsuTitle <> "osu!" And $BeatmapLoaded = 1 Then
 		Play()
 	ElseIf $BeatmapLoaded = 1 Then
-		setStatus($Status, "Waiting for Song: " & $SelectedSong)
+		setStatus($Status, "Waiting for Song! ")
 	Else
 		setStatus($Status, "Need to load Beatmap First!")
 	EndIf
@@ -206,10 +188,10 @@ While 1 ;Main window loop
 		Case $GUI_EVENT_CLOSE
 			_Exit($LogFile, $OsuProcess)
 
-		Case $LoadList
+		Case $SongSearch ;$LoadList
 			updateList()
 
-		Case $LoadSelected
+		Case $Songlist ;$LoadSelected
 			LoadSelectedBeatmap()
 
 		Case $LoadDiff
@@ -269,9 +251,17 @@ Func Play()
 	Global $BeginKlick = 0
 	Global $EndKlick = 0
 
-	Local $StopButton = "s"
-	Global $Button1 = "-"
-	Global $Button2 = "."
+
+	Local $StopButton = IniRead($Inifile, $IniSectionKeys, $IniKeyStopkey, "s")
+	Global $Button1 = IniRead($Inifile, $IniSectionKeys, $IniKeyButton1, "x")
+	Global $Button2 = IniRead($Inifile, $IniSectionKeys, $IniKeyButton1, "z")
+
+	IniWrite($Inifile, $IniSectionKeys, $IniKeyStopkey, $StopButton)
+	IniWrite($Inifile, $IniSectionKeys, $IniKeyButton1, $Button1)
+	IniWrite($Inifile, $IniSectionKeys, $IniKeyButton2, $Button2)
+
+	;Save settings
+
 
 	HotKeySet("{" & $StopButton & "}", "StopPlaying") ;Hotkey to stop bot
 
@@ -318,19 +308,25 @@ Func Play()
 					HotKeySet("{s}")
 					Return
 				EndIf
-				$NextHitTime = StringSplit($HitList[$i], ",")[3] ;Time
-				If $Time < $NextHitTime Then $FoundNextHit = 1
+				ConsoleWrite($HitList[$i] & @CRLF)
+				$NextHitComplete = StringSplit($HitList[$i], ",")
+				$NextHitTime = $NextHitComplete[3] ;Time
+				If $Time < $NextHitTime Then
+					$FoundNextHit = 1
+					$Klicked = 0
+				EndIf
 				$i += 1
 			Until $FoundNextHit = 1
 
 			If $Finished = 0 Then
+
 				$NextHitType = StringSplit($HitList[$i - 1], ",")[4] ;Type
 
 				$BeginKlick = $NextHitTime - $PreKlick
 
 
 				;Which type of hit
-				If $NextHitType = 1 Or $NextHitType = 5 Or $NextHitType = 16 Then ;Circle
+				If $NextHitType = 1 Or $NextHitType = 5 Or $NextHitType = 16 Or $NextHitType = 37 Or $NextHitType = 21 Then ;Circle
 					$EndKlick = $BeginKlick + $ExtraPressTime
 
 ;~ 				ElseIf $NextHitType = 2 Or $NextHitType = 6 Or $NextHitType = 21 Or $NextHitType = 22 Then ;Slider
@@ -338,15 +334,18 @@ Func Play()
 
 
 				ElseIf $NextHitType = 12 Or $NextHitType = 8 Then ;Spin
-					$EndKlick = StringSplit($HitList[$i - 1], ",")[6] + $ExtraPressTime ;You can read the duration there
+					$EndKlick = $NextHitComplete[6] + $ExtraPressTime ;You can read the duration there
 
-					;if pressed till before the next hitobject
+					;if pressed till after the next hitobject
 					If $i <= UBound($HitList) - 1 And $EndKlick > StringSplit($HitList[$i], ",")[3] Then $EndKlick = StringSplit($HitList[$i], ",")[3] - ($ExtraPressTime * 2)
 
 				Else ;Slider
-					Local $Repetition = StringSplit($HitList[$i - 1], ",")[7]
-					Local $Length = StringSplit($HitList[$i - 1], ",")[8]
-					$EndKlick = $BeginKlick + $CurrentBPM * $Repetition * $Length / $SliderMultiplier / 100
+					Local $Repetition = $NextHitComplete[7]
+					Local $Length = $NextHitComplete[8]
+					$EndKlick = $BeginKlick + $CurrentBPM * $Repetition * $Length / $SliderMultiplier / 100 + $ExtraPressTime
+
+					;if pressed till after the next hitobject
+					If $i <= UBound($HitList) - 1 And $EndKlick > StringSplit($HitList[$i], ",")[3] Then $EndKlick = StringSplit($HitList[$i], ",")[3] - ($ExtraPressTime * 2)
 				EndIf
 
 
@@ -548,7 +547,7 @@ EndFunc   ;==>StopPlaying
 
 ; #FUNCTION# ====================================================================================================================
 ; Name ..........: updateList
-; Description ...: Displays all Songs in $Songnames that include the string entered in $Songpath
+; Description ...: Displays all Songs in $Songlist that include the string entered in $SongSearch
 ; Syntax ........: updateList()
 ; Parameters ....:
 ; Return values .: None
@@ -563,10 +562,10 @@ Func updateList()
 	setStatus($Status, "Searching beatmaps...")
 	logThis($LogFile, "Searching beatmaps...")
 
-	GUICtrlSetData($Songnames, "")
-	Local $Mask = GUICtrlRead($Songpath)
+	GUICtrlSetData($Songlist, "")
+	Local $Mask = GUICtrlRead($SongSearch)
 	For $i = 0 To UBound($MapList) - 1 Step 1
-		If StringInStr($MapList[$i], $Mask) > 0 Then GUICtrlSetData($Songnames, $MapList[$i] & "|")
+		If StringInStr($MapList[$i], $Mask) > 0 Then GUICtrlSetData($Songlist, $MapList[$i] & "|")
 	Next
 
 	setStatus($Status, "Search finished.")
@@ -577,7 +576,7 @@ EndFunc   ;==>updateList
 
 ; #FUNCTION# ====================================================================================================================
 ; Name ..........: LoadSelectedBeatmap
-; Description ...: Displays all difficultys of the Beatmap that's selected in $Songnames
+; Description ...: Displays all difficultys of the Beatmap that's selected in $Songlist
 ; Syntax ........: LoadSelectedBeatmap()
 ; Parameters ....:
 ; Return values .: None
@@ -594,7 +593,7 @@ Func LoadSelectedBeatmap()
 
 	GUICtrlSetData($DiffList, "")
 
-	Local $tmpSong = GUICtrlRead($Songnames)
+	Local $tmpSong = GUICtrlRead($Songlist)
 	If $tmpSong <> "" And $tmpSong <> 0 Then
 		$Song = $tmpSong
 
@@ -626,14 +625,17 @@ EndFunc   ;==>LoadSelectedBeatmap
 ; Example .......: No
 ; ===============================================================================================================================
 Func LoadSelectedDiff()
+	Local $SelectedDiff = GUICtrlRead($DiffList)
 	For $i = 0 To UBound($Diffs) - 1 Step 1
-		If StringInStr($Diffs[$i], GUICtrlRead($DiffList)) > 0 Then $Diff = $Diffs[$i]
+		If StringInStr($Diffs[$i], $SelectedDiff) > 0 Then $Diff = $Diffs[$i]
 	Next
 
 	setStatus($Status, "Loading Beatmap")
 	logThis($LogFile, "Loading Beatmap")
 
 	LoadBeatmap($Directory & $Song & "\" & $Diff)
+	$SelectedSong = $Song & " [" & $SelectedDiff & "]"
+	ConsoleWrite($SelectedDiff & @CRLF)
 	If @error Or Not IsArray($HitList) Then
 		$BeatmapLoaded = 0
 		DisplayError("Couldn't load Beatmap. Errorcode: " & @error)
@@ -641,6 +643,7 @@ Func LoadSelectedDiff()
 		Return
 	EndIf
 
+	GUICtrlSetData($LoadedBeatmap, $SelectedSong)
 	setStatus($Status, "Beatmap loaded.")
 	logThis($LogFile, "Beatmap loaded.")
 EndFunc   ;==>LoadSelectedDiff
@@ -662,36 +665,46 @@ EndFunc   ;==>LoadSelectedDiff
 ; ===============================================================================================================================
 Func LoadBeatmap($FilePath)
 	$BeatmapLoaded = 0
-
+	setStatus($Status, "Reading Beatmap")
 	Local $Beatmap = FileReadToArray($FilePath)
 
 	FileClose($FilePath)
 	If @error Or Not IsArray($Beatmap) Or Not StringInStr($Beatmap[0], "osu file format v") Then
-		DisplayError("Beatmap couldn't be loaded. Errorcode: " & @error)
+		DisplayError("Error reading Beatmap. Errorcode: " & @error)
 		Return
 	EndIf
 
 	ConsoleWrite("Erste Zeile der Beatmap: " & $Beatmap[0] & @CRLF)
 
+	setStatus($Status, "Validating mode.")
+	Local $Mode = LoadFromBeatMap($Beatmap, "Mode")
+	SetError(0)
+	If $Mode <> " 0" And $Mode <> 0 Then
+		DisplayError("Wrong gamemode.")
+		Return
+	EndIf
+
+	setStatus($Status, "Loading HitObjects.")
 	$HitList = LoadHitObjects($Beatmap)
 	If @error Or Not IsArray($HitList) Then
 		DisplayError("Error loading hitobjects Errorcode: " & @error)
 		Return
 	EndIf
 
+	setStatus($Status, "Loading bpmchanges")
 	$Bpms = LoadBpms($Beatmap)
 	If @error Or Not IsArray($Bpms) Then
 		DisplayError("Error loading TimingPoints. Errorcode: " & @error)
 		Return
 	EndIf
 
+	setStatus($Status, "Loading SliderMultiplier")
 	$SliderMultiplier = LoadFromBeatMap($Beatmap, "SliderMultiplier")
 	If @error Then
 		DisplayError("Error loading SliderMultiplier from Beatmap.")
 		Return
 	EndIf
 
-	$SelectedSong = $Song
 	$BeatmapLoaded = 1
 EndFunc   ;==>LoadBeatmap
 

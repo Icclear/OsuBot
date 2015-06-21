@@ -28,29 +28,6 @@ EndFunc
 
 
 ; #FUNCTION# ====================================================================================================================
-; Name ..........: setTitle
-; Description ...: Sets the label displaying osu's current window title
-; Syntax ........: setTitle($TitleLabel, $Title)
-; Parameters ....: $TitleLabel          - handle of the label
-;                  $Title               - string containing the current title
-; Return values .: None
-; Author ........: Icclear
-; Modified ......:
-; Remarks .......:
-; Related .......:
-; Link ..........:
-; Example .......: No
-; ===============================================================================================================================
-Func setTitle($TitleLabel, $Title)
-	if IsString($Title) then
-		GUICtrlSetData($TitleLabel, "Title: " & $Title)
-	Else
-		GUICtrlSetData($TitleLabel, "Title: Error setting Title. Argument not a string.")
-	EndIf
-EndFunc
-
-
-; #FUNCTION# ====================================================================================================================
 ; Name ..........: setTime
 ; Description ...: updates the time in the time label
 ; Syntax ........: setTime($TimeField, $Time)
