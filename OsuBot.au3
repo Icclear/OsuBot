@@ -2,7 +2,7 @@
 #AutoIt3Wrapper_Compression=0
 #AutoIt3Wrapper_Compile_Both=y
 #AutoIt3Wrapper_Res_Description=Relax bot for osu so far.
-#AutoIt3Wrapper_Res_Fileversion=0.2
+#AutoIt3Wrapper_Res_Fileversion=0.2.1.0
 #AutoIt3Wrapper_Run_Tidy=y
 #AutoIt3Wrapper_Run_Au3Stripper=y
 #EndRegion ;**** Directives created by AutoIt3Wrapper_GUI ****
@@ -235,6 +235,7 @@ Func Play()
 		If $RelaxActive Then ReleaseButtons()
 
 	WEnd ;End of the while loop the playing takes place in
+
 	setStatus($Status, "Finished playing map.")
 	logThis($LogFile, "Stopped Playing")
 	ResetButtons()
@@ -464,7 +465,7 @@ Func LoadSelectedBeatmap()
 
 		$Diffs = _FileListToArray($Directory & $Song, "*", $FLTA_FILES)
 		For $i = 0 To UBound($Diffs) - 1 Step 1
-			If StringInStr($Diffs[$i], ".osu") > 0 Then
+			If StringInStr($Diffs[$i], ".osu") = StringLen($Diffs[$i]) - 3 Then
 				GUICtrlSetData($DiffList, StringSplit(StringSplit($Diffs[$i], "[")[2], "]")[1])
 			EndIf
 		Next
@@ -492,7 +493,7 @@ EndFunc   ;==>LoadSelectedBeatmap
 Func LoadSelectedDiff()
 	Local $SelectedDiff = GUICtrlRead($DiffList)
 	For $i = 0 To UBound($Diffs) - 1 Step 1
-		If StringInStr($Diffs[$i], $SelectedDiff) > 0 Then $Diff = $Diffs[$i]
+		If StringInStr($Diffs[$i], "[" & $SelectedDiff & "]") > 0 And StringInStr($Diffs[$i], ".osu") = StringLen($Diffs[$i]) - 3 Then $Diff = $Diffs[$i]
 	Next
 
 	setStatus($Status, "Loading Beatmap")
@@ -538,6 +539,7 @@ Func LoadBeatmap($FilePath)
 	setStatus($Status, "Reading Beatmap")
 	logThis($LogFile, "Reading Beatmap: " & $FilePath)
 	Local $Beatmap = FileReadToArray($FilePath)
+
 
 	FileClose($FilePath)
 	If @error Or Not IsArray($Beatmap) Or Not StringInStr($Beatmap[0], "osu file format v") Then
