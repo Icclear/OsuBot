@@ -28,6 +28,9 @@
 #include "Includes\GUI.au3"
 #include "Includes\Initiate.au3"
 
+;Inlcludes relying on global vars
+#include "Includes\Options.au3"
+
 #EndRegion Includes
 
 
@@ -56,6 +59,9 @@ While 1 ;Main window loop
 	Switch $nMsg
 		Case $GUI_EVENT_CLOSE
 			_Exit($LogFile, $OsuProcess)
+
+		Case $OpenOptions
+			Options()
 
 		Case $SongSearch ;$LoadList
 			updateList()
@@ -217,7 +223,7 @@ Func Play()
 					$EndKlick = $BeginKlick + $CurrentBPM * $Repetition * $Length / $SliderMultiplier / 100 + $ExtraHoldTime
 
 					;if pressed till after the next hitobject
-					If $i <= UBound($HitList) - 2 And $EndKlick > StringSplit($HitList[$i+1], ",")[3] Then $EndKlick = StringSplit($HitList[$i+1], ",")[3] - ($ExtraHoldTime * 2)
+					If $i <= UBound($HitList) - 2 And $EndKlick > StringSplit($HitList[$i + 1], ",")[3] Then $EndKlick = StringSplit($HitList[$i + 1], ",")[3] - ($ExtraHoldTime * 2)
 				EndIf
 
 

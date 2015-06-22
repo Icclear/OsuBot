@@ -6,7 +6,7 @@ setStatus($Status, "GUI initialiued.")
 
 ;~	is there an osu window?
 If WinWait("osu!", "", 5) = 0 Then
-	showError($LogFile, 0, "Osu!-window not found!")
+	DisplayError("Osu!-window not found!")
 	SetError(1)
 	Exit
 EndIf

@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="windows-1251"?>
 <object type="TAForm" name="MainWindow">
 	<properties>
-		<property name="Left" vt="Int16">213</property>
-		<property name="Top" vt="Int16">181</property>
+		<property name="Left" vt="Int16">265</property>
+		<property name="Top" vt="Int16">166</property>
 		<property name="Width" vt="Int16">756</property>
 		<property name="Height" vt="Int16">376</property>
 		<property name="Caption" vt="String">Form1</property>
@@ -12,6 +12,7 @@
 		<property name="Font.Height" vt="Int8">-11</property>
 		<property name="Font.Name" vt="String">MS Sans Serif</property>
 		<property name="Font.Style" vt="Set"/>
+		<property name="Menu" vt="Ident">Datei</property>
 		<property name="OldCreateOrder" vt="False">False</property>
 		<property name="Visible" vt="True">True</property>
 		<property name="Style" vt="Int32">-1798701056</property>
@@ -30,6 +31,17 @@
 		<property name="TextHeight" vt="Int8">13</property>
 	</properties>
 	<components>
+		<object type="TAMenu" name="Datei">
+			<properties>
+				<property name="Left" vt="Int8">56</property>
+				<property name="Top" vt="Int8">40</property>
+				<property name="Width" vt="Int8">28</property>
+				<property name="Height" vt="Int8">28</property>
+				<property name="Associate" vt="Ident">Owner</property>
+				<property name="WrappedName" vt="String">MainMenu1</property>
+			</properties>
+			<components/>
+		</object>
 		<object type="TAGroup" name="StatusBox">
 			<properties>
 				<property name="Left" vt="Int8">96</property>
@@ -47,7 +59,7 @@
 					<properties>
 						<property name="Left" vt="Int8">16</property>
 						<property name="Top" vt="Int8">24</property>
-						<property name="Width" vt="Int16">586</property>
+						<property name="Width" vt="Int8">34</property>
 						<property name="Height" vt="Int8">17</property>
 						<property name="Caption" vt="String">Status</property>
 						<property name="TabOrder" vt="Int8">0</property>
@@ -62,7 +74,7 @@
 					<properties>
 						<property name="Left" vt="Int8">16</property>
 						<property name="Top" vt="Int8">88</property>
-						<property name="Width" vt="Int16">589</property>
+						<property name="Width" vt="Int8">53</property>
 						<property name="Height" vt="Int8">17</property>
 						<property name="Caption" vt="String">TimeLabel</property>
 						<property name="TabOrder" vt="Int8">1</property>
@@ -77,7 +89,7 @@
 					<properties>
 						<property name="Left" vt="Int8">16</property>
 						<property name="Top" vt="Int8">56</property>
-						<property name="Width" vt="Int16">594</property>
+						<property name="Width" vt="Int8">82</property>
 						<property name="Height" vt="Int8">17</property>
 						<property name="Caption" vt="String">LoadedBeatmap</property>
 						<property name="TabOrder" vt="Int8">2</property>
@@ -179,6 +191,26 @@
 				<property name="Resizing" vt="Set">DockWidth, DockHeight</property>
 			</properties>
 			<components/>
+		</object>
+		<object type="TMainMenu" name="MainMenu1">
+			<properties/>
+			<components>
+				<object type="TAMenuItem" name="Options">
+					<properties>
+						<property name="Caption" vt="String">&amp;Options</property>
+						<property name="OnClick" vt="String">OptionsClick</property>
+					</properties>
+					<components>
+						<object type="TAMenuItem" name="OpenOptions">
+							<properties>
+								<property name="Caption" vt="String">Open Options</property>
+								<property name="OnClick" vt="String">OpenOptionsClick</property>
+							</properties>
+							<components/>
+						</object>
+					</components>
+				</object>
+			</components>
 		</object>
 	</components>
 </object>

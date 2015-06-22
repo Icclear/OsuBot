@@ -9,6 +9,8 @@ Local Const $WindowTitle = IniRead($Inifile, $IniSectionGeneral, $IniKeyWindowti
 ;~ Gui initialisieren
 #Region ### START Koda GUI section ### Form=
 Global $MainWindow = GUICreate($WindowTitle, 741, 338, 1505, 181)
+Global $Options = GUICtrlCreateMenu("Options")
+$OpenOptions = GUICtrlCreateMenuItem("Open Options", $Options)
 Global $StatusBox = GUICtrlCreateGroup("StatusBox", 96, 200, 617, 113)
 Global $Status = GUICtrlCreateLabel("Window found.", 112, 224, 586, 17)
 Global $TimeLabel = GUICtrlCreateLabel("Time: ", 112, 288, 589, 17)
