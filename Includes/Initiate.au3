@@ -74,9 +74,7 @@ Else ;if valid add "Songs\"
 		$Directory &= $SongsDir
 	EndIf
 
-	If IniWrite($Inifile, $IniSectionGeneral, $IniKeyDirectory, $Directory) = 0 Then
-		DisplayError("Couldn't save directory File is readonly.")
-	EndIf
+	If $FileNotProtected = 1 then IniWrite($Inifile, $IniSectionGeneral, $IniKeyDirectory, $Directory)
 EndIf
 
 logThis($LogFile, "Song folder found: " & $Directory)

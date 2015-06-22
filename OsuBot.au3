@@ -1,6 +1,8 @@
 #Region ;**** Directives created by AutoIt3Wrapper_GUI ****
 #AutoIt3Wrapper_Compression=0
 #AutoIt3Wrapper_Compile_Both=y
+#AutoIt3Wrapper_Res_Description=Relax bot for osu so far.
+#AutoIt3Wrapper_Res_Fileversion=0.2
 #AutoIt3Wrapper_Run_Tidy=y
 #AutoIt3Wrapper_Run_Au3Stripper=y
 #EndRegion ;**** Directives created by AutoIt3Wrapper_GUI ****
@@ -22,6 +24,7 @@
 
 
 ;Begin Program
+#include "Includes\InitiateIni.au3"
 #include "Includes\GUI.au3"
 #include "Includes\Initiate.au3"
 
@@ -32,7 +35,7 @@
 
 Local $Playing = 0
 Local $Time = 0
-setTime($TimeLabel, $Time) ;Zeit eintragen
+setTime($TimeLabel, $Time) ;set Time label
 
 While 1 ;Main window loop
 	$OsuTitle = WinGetTitle("osu!")
@@ -112,8 +115,8 @@ Func Play()
 	Global $BT2Pressed = 0
 	Global $BT2ReleaseAt = 0
 
-	Local $PreKlick = 25
-	Global $ExtraPressTime = 40
+	Local $PreKlick = IniRead($Inifile, $IniSectionPlaying, $IniKeyPreKlick, "25")
+	Global $ExtraHoldTime = IniRead($Inifile, $IniSectionPlaying, $IniKeyExtraHoldTime, "40")
 	Global $BeginKlick = 0
 	Global $EndKlick = 0
 
@@ -121,10 +124,6 @@ Func Play()
 	Local $StopButton = IniRead($Inifile, $IniSectionKeys, $IniKeyStopkey, "s")
 	Global $Button1 = IniRead($Inifile, $IniSectionKeys, $IniKeyButton1, "x")
 	Global $Button2 = IniRead($Inifile, $IniSectionKeys, $IniKeyButton2, "z")
-
-	IniWrite($Inifile, $IniSectionKeys, $IniKeyStopkey, $StopButton)
-	IniWrite($Inifile, $IniSectionKeys, $IniKeyButton1, $Button1)
-	IniWrite($Inifile, $IniSectionKeys, $IniKeyButton2, $Button2)
 
 	;Save settings
 
@@ -140,6 +139,7 @@ Func Play()
 	While readTime($LogFile, $TimeAdress, $OsuProcess) > 10 Or readTime($LogFile, $TimeAdress, $OsuProcess) < 0
 		Sleep(1)
 	WEnd
+	LogThis($LogFile, "Started playing.")
 
 	While $Playing = 1;WinGetTitle("osu!") = $OsuTitle
 
@@ -192,25 +192,25 @@ Func Play()
 
 				;Which type of hit
 				If $NextHitType = 1 Or $NextHitType = 5 Or $NextHitType = 16 Or $NextHitType = 37 Or $NextHitType = 21 Then ;Circle
-					$EndKlick = $BeginKlick + $ExtraPressTime
+					$EndKlick = $BeginKlick + $ExtraHoldTime
 
 ;~ 				ElseIf $NextHitType = 2 Or $NextHitType = 6 Or $NextHitType = 21 Or $NextHitType = 22 Then ;Slider
 					;Moved to else since there were too many possibilities
 
 
 				ElseIf $NextHitType = 12 Or $NextHitType = 8 Then ;Spin
-					$EndKlick = $NextHitComplete[6] + $ExtraPressTime ;You can read the duration there
+					$EndKlick = $NextHitComplete[6] + $ExtraHoldTime ;You can read the duration there
 
 					;if pressed till after the next hitobject
-					If $i <= UBound($HitList) - 1 And $EndKlick > StringSplit($HitList[$i], ",")[3] Then $EndKlick = StringSplit($HitList[$i], ",")[3] - ($ExtraPressTime * 2)
+					If $i <= UBound($HitList) - 1 And $EndKlick > StringSplit($HitList[$i], ",")[3] Then $EndKlick = StringSplit($HitList[$i], ",")[3] - ($ExtraHoldTime * 2)
 
 				Else ;Slider
 					Local $Repetition = $NextHitComplete[7]
 					Local $Length = $NextHitComplete[8]
-					$EndKlick = $BeginKlick + $CurrentBPM * $Repetition * $Length / $SliderMultiplier / 100 + $ExtraPressTime
+					$EndKlick = $BeginKlick + $CurrentBPM * $Repetition * $Length / $SliderMultiplier / 100 + $ExtraHoldTime
 
 					;if pressed till after the next hitobject
-					If $i <= UBound($HitList) - 1 And $EndKlick > StringSplit($HitList[$i], ",")[3] Then $EndKlick = StringSplit($HitList[$i], ",")[3] - ($ExtraPressTime * 2)
+					If $i <= UBound($HitList) - 1 And $EndKlick > StringSplit($HitList[$i], ",")[3] Then $EndKlick = StringSplit($HitList[$i], ",")[3] - ($ExtraHoldTime * 2)
 				EndIf
 
 
@@ -221,12 +221,12 @@ Func Play()
 		EndIf
 
 		If $Finished = 0 Then
-			If $RelaxActive And $Time > $BeginKlick And $Time < $EndKlick And $Klicked = 0 Then
+			If $Time > $BeginKlick And $Time < $EndKlick And $Klicked = 0 Then
 				setStatus($Status, "Klicking")
 				$Klicked = 1
-				Klick()
+				If $RelaxActive Then Klick()
 
-			ElseIf $RelaxActive And $Time >= $BeginKlick + $ExtraPressTime Then
+			ElseIf $Time >= $BeginKlick + $ExtraHoldTime Then
 				$FoundNextHit = 0
 				$Klicked = 0
 			EndIf

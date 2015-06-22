@@ -1,4 +1,5 @@
 #include-once
+
 ;Data folder
 Global Const $DataFolder = "Data"
 DirCreate("Data")
@@ -16,3 +17,7 @@ Global Const $IniSectionKeys = "Keys"
 Global Const $IniKeyStopkey = "StopKey"
 Global Const $IniKeyButton1 = "Button 1"
 Global Const $IniKeyButton2 = "Button 2"
+
+Global Const $IniSectionPlaying = "Playing"
+Global Const $IniKeyPreKlick = "Preklick"
+Global Const $IniKeyExtraHoldTime = "Extraholdtime"

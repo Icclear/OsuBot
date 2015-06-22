@@ -1,14 +1,10 @@
-#Region GUI
-FileDelete($Logfile)
+#include-once
 
-logThis($LogFile, "Program started.")
+#Region GUI
+logThis($Logfile, "Creating GUI")
 
 ;~ Fenstertitel festlegen
 Local Const $WindowTitle = IniRead($Inifile, $IniSectionGeneral, $IniKeyWindowtitle, "ChangeMe")
-If IniWrite($Inifile, $IniSectionGeneral, $IniKeyWindowtitle, $WindowTitle) = 0 Then
-	showError($LogFile, 0, "Couldn't save windowtitle. File is readonly.")
-EndIf
-
 
 ;~ Gui initialisieren
 #Region ### START Koda GUI section ### Form=
