@@ -107,6 +107,7 @@ Func Play()
 	Global $Time = 0
 	Local $BPMCount = 0
 	Local $CurrentBPM = $Bpms[$BPMCount][1] ;bpm
+	Local $LastActualBPM = $CurrentBPM
 	Local $i = 0 ;Count var
 
 	Global $LastButtonPressed = 1
@@ -134,12 +135,15 @@ Func Play()
 
 	#EndRegion PlayingInit
 
-	;Some songs start with negative time that is calculated as extremely high value in autoit. Thus wait till the time is below 10 and the map starts.
+	; Wait till the time is below 30 and the map starts.
 	$Time = readTime($LogFile, $TimeAdress, $OsuProcess)
 	While $Time > 30 Or $Time < 0
 		Sleep(1)
 		$Time = readTime($LogFile, $TimeAdress, $OsuProcess)
-		If $Playing = 0 Then Return ;to prevent freezing without a song.
+		If $Playing = 0 Or WinGetTitle("osu!") = "osu!" Then ;to prevent freezing without a song.
+			HotKeySet("{s}")
+			Return
+		EndIf
 	WEnd
 	LogThis($LogFile, "Started playing: " & $SelectedSong)
 
@@ -153,9 +157,10 @@ Func Play()
 			If $Time > $Bpms[$BPMCount + 1][0] Then
 				$BPMCount += 1
 				If $Bpms[$BPMCount][1] < 0 Then
-					$CurrentBPM = -1 * $Bpms[$BPMCount][1] / 100 * $CurrentBPM
+					$CurrentBPM = -1 * $Bpms[$BPMCount][1] / 100 * $LastActualBPM
 				Else
 					$CurrentBPM = $Bpms[$BPMCount][1]
+					$LastActualBPM = $CurrentBPM
 				EndIf
 			EndIf
 		EndIf
@@ -187,7 +192,7 @@ Func Play()
 
 			If $Finished = 0 Then
 
-				$NextHitType = StringSplit($HitList[$i - 1], ",")[4] ;Type
+				$NextHitType = $NextHitComplete[4] ;Type
 
 				$BeginKlick = $NextHitTime - $PreKlick
 
@@ -212,7 +217,7 @@ Func Play()
 					$EndKlick = $BeginKlick + $CurrentBPM * $Repetition * $Length / $SliderMultiplier / 100 + $ExtraHoldTime
 
 					;if pressed till after the next hitobject
-					If $i <= UBound($HitList) - 1 And $EndKlick > StringSplit($HitList[$i], ",")[3] Then $EndKlick = StringSplit($HitList[$i], ",")[3] - ($ExtraHoldTime * 2)
+					If $i <= UBound($HitList) - 2 And $EndKlick > StringSplit($HitList[$i+1], ",")[3] Then $EndKlick = StringSplit($HitList[$i+1], ",")[3] - ($ExtraHoldTime * 2)
 				EndIf
 
 
@@ -469,7 +474,12 @@ Func LoadSelectedBeatmap()
 		$Diffs = _FileListToArray($Directory & $Song, "*", $FLTA_FILES)
 		For $i = 0 To UBound($Diffs) - 1 Step 1
 			If StringInStr($Diffs[$i], ".osu") = StringLen($Diffs[$i]) - 3 Then
-				GUICtrlSetData($DiffList, StringSplit(StringSplit($Diffs[$i], "[")[2], "]")[1])
+				Local $Right = StringSplit($Diffs[$i], "[")
+				Local $Total = ""
+				For $j = 2 To $Right[0] Step 1
+					$Total &= "[" & $Right[$j]
+				Next
+				GUICtrlSetData($DiffList, StringTrimRight($Total, 4))
 			EndIf
 		Next
 	EndIf
@@ -504,7 +514,7 @@ Func LoadSelectedDiff()
 	logThis($LogFile, "Selecting Difficulty")
 
 	For $i = 0 To UBound($Diffs) - 1 Step 1
-		If StringInStr($Diffs[$i], "[" & $SelectedDiff & "]") > 0 And StringInStr($Diffs[$i], ".osu") = StringLen($Diffs[$i]) - 3 Then $Diff = $Diffs[$i]
+		If StringInStr($Diffs[$i], $SelectedDiff) > 0 And StringInStr($Diffs[$i], ".osu") = StringLen($Diffs[$i]) - 3 Then $Diff = $Diffs[$i]
 	Next
 
 	setStatus($Status, "Loading Beatmap")
@@ -568,6 +578,7 @@ Func LoadBeatmap($FilePath)
 	Local $Mode = LoadFromBeatMap($Beatmap, "Mode")
 	If $Mode <> " 0" And Not @error Then ;Not in old maps
 		DisplayError("Wrong gamemode.")
+		ConsoleWrite("Mode: " & $Mode & @CRLF)
 		Return
 	EndIf
 	If @error Then SetError(0) ;reset Error
