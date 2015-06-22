@@ -3,10 +3,11 @@
 Global Const $DataFolder = "Data"
 DirCreate("Data")
 
-;Inidatei
+;files
 Global Const $Inifile = $DataFolder & "/Settings.ini"
 Global Const $LogFile = $DataFolder & "/log.log"
 
+;ini
 Global Const $IniSectionGeneral = "General"
 Global Const $IniKeyWindowtitle = "WindowTitle"
 Global Const $IniKeyDirectory = "Directory"

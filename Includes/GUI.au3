@@ -1,4 +1,6 @@
 #Region GUI
+FileDelete($Logfile)
+
 logThis($LogFile, "Program started.")
 
 ;~ Fenstertitel festlegen
