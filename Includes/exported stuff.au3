@@ -1,8 +1,3 @@
-#include "NomadMemory.au3"
-#include <Array.au3>
-#include <FileConstants.au3>
-#include "HelpFunctions.au3"
-
 #include-once
 #Region ExStuff
 
@@ -169,7 +164,7 @@ EndFunc   ;==>LoadBeatmap
 ; Return values .: the value of the key
 ; Author ........: Icclear
 ; Modified ......:
-; Remarks .......:
+; Remarks .......: Error = 1 if not found
 ; Related .......:
 ; Link ..........:
 ; Example .......: No

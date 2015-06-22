@@ -1,6 +1,3 @@
-#include "NomadMemory.au3"
-#include <File.au3>
-
 #include-once
 #Region HelpFunctions
 
@@ -66,7 +63,6 @@ EndFunc
 ; Example .......: No
 ; ===============================================================================================================================
 Func showError($LogFile, $Status, $Error)
-	ConsoleWriteError($Error & @CRLF)
 	if not $status = 0 then setStatus($Status, $Error)
 	MsgBox(8192, "Error", $Error)
 	LogThis($LogFile, "[Error] " & $Error)
@@ -133,7 +129,11 @@ EndFunc	;==>_Exit
 ; Example .......: No
 ; ===============================================================================================================================
 Func LogThis($LogFile, $toLog)
-	ConsoleWrite($toLog & @CRLF)
+	if StringLeft($toLog, 7) = "[Error]" then
+		ConsoleWriteError($toLog & @CRLF)
+	Else
+		ConsoleWrite($toLog & @CRLF)
+	EndIf
 	_FileWriteLog($LogFile, $toLog)
 EndFunc
 

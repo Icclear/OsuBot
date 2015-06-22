@@ -1,4 +1,4 @@
-
+#include-once
 ;Data folder
 Global Const $DataFolder = "Data"
 DirCreate("Data")
