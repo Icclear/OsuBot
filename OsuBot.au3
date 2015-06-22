@@ -2,7 +2,7 @@
 #AutoIt3Wrapper_Compression=0
 #AutoIt3Wrapper_Compile_Both=y
 #AutoIt3Wrapper_Res_Description=Relax bot for osu so far.
-#AutoIt3Wrapper_Res_Fileversion=0.2.1.0
+#AutoIt3Wrapper_Res_Fileversion=0.2.2.0
 #AutoIt3Wrapper_Run_Tidy=y
 #AutoIt3Wrapper_Run_Au3Stripper=y
 #EndRegion ;**** Directives created by AutoIt3Wrapper_GUI ****
@@ -66,7 +66,7 @@ While 1 ;Main window loop
 		Case $LoadDiff
 			LoadSelectedDiff()
 	EndSwitch
-	Sleep(5)
+	Sleep(2)
 WEnd
 
 _Exit($LogFile, $OsuProcess)
@@ -134,12 +134,14 @@ Func Play()
 
 	#EndRegion PlayingInit
 
-
 	;Some songs start with negative time that is calculated as extremely high value in autoit. Thus wait till the time is below 10 and the map starts.
-	While readTime($LogFile, $TimeAdress, $OsuProcess) > 10 Or readTime($LogFile, $TimeAdress, $OsuProcess) < 0
+	$Time = readTime($LogFile, $TimeAdress, $OsuProcess)
+	While $Time > 30 Or $Time < 0
 		Sleep(1)
+		$Time = readTime($LogFile, $TimeAdress, $OsuProcess)
+		If $Playing = 0 Then Return ;to prevent freezing without a song.
 	WEnd
-	LogThis($LogFile, "Started playing.")
+	LogThis($LogFile, "Started playing: " & $SelectedSong)
 
 	While $Playing = 1;WinGetTitle("osu!") = $OsuTitle
 
@@ -237,9 +239,10 @@ Func Play()
 	WEnd ;End of the while loop the playing takes place in
 
 	setStatus($Status, "Finished playing map.")
-	logThis($LogFile, "Stopped Playing")
+	logThis($LogFile, "Stopped Playing: " & $SelectedSong)
 	ResetButtons()
 	HotKeySet("{s}")
+	Return
 
 EndFunc   ;==>Play
 
@@ -492,6 +495,14 @@ EndFunc   ;==>LoadSelectedBeatmap
 ; ===============================================================================================================================
 Func LoadSelectedDiff()
 	Local $SelectedDiff = GUICtrlRead($DiffList)
+	If $SelectedDiff = "" Then
+		DisplayError("No Difficulty selected.")
+		Return
+	EndIf
+
+	setStatus($Status, "Selecting Difficulty")
+	logThis($LogFile, "Selecting Difficulty")
+
 	For $i = 0 To UBound($Diffs) - 1 Step 1
 		If StringInStr($Diffs[$i], "[" & $SelectedDiff & "]") > 0 And StringInStr($Diffs[$i], ".osu") = StringLen($Diffs[$i]) - 3 Then $Diff = $Diffs[$i]
 	Next
@@ -500,7 +511,7 @@ Func LoadSelectedDiff()
 	logThis($LogFile, "Loading Beatmap")
 
 	LoadBeatmap($Directory & $Song & "\" & $Diff)
-	$SelectedSong = $Song & " [" & $SelectedDiff & "]"
+	Global $SelectedSong = $Song & " [" & $SelectedDiff & "]"
 	If @error Or Not IsArray($HitList) Then
 		$BeatmapLoaded = 0
 		DisplayError("Couldn't load Beatmap. Errorcode: " & @error)
